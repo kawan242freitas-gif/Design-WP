@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp iOS Clone - Dark Mode</title>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    
+    <style>
+        /* --- CONFIGURAÇÕES GERAIS E VARIÁVEIS (A MÁGICA DO TEMA) --- */
+        :root {
+            --ios-blue: #007AFF;
+            --ios-green: #34C759;
+            --ios-gray: #8E8E93;
+            --ios-red: #FF3B30;
+            --separator: #c6c6c8;
+            
+            /* Variáveis Light Mode (Padrão) */
+            --bg-body: #f2f2f7;
+            --bg-card: #ffffff;
+            --text-primary: #000000;
+            --text-secondary: #8a8a8e;
+            --bg-input: #e3e3e8;
+            --nav-bg: rgba(249, 249, 249, 0.9);
+            --border-color: rgba(0,0,0,0.1);
+        }
+
+        /* Variáveis Dark Mode */
+        body.dark-mode {
+            --bg-body: #000000;
+            --bg-card: #1c1c1e;
+            --text-primary: #ffffff;
+            --text-secondary: #98989f;
+            --bg-input: #2c2c2e;
+            --nav-bg: rgba(30, 30, 30, 0.9);
+            --border-color: rgba(255,255,255,0.1);
+            --separator: #38383a;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        body {
+            background-color: #202020; /* Fundo do PC */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* --- A MOLDURA DO IPHONE --- */
+        .iphone-frame {
+            width: 375px;
+            height: 812px;
+            background-color: var(--bg-body);
+            border-radius: 40px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border: 8px solid #333;
+        }
+
+        /* Notch (Detalhe estético) */
+        .notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50%;
+            height: 30px;
+            background-color: #333;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            z-index: 100;
+        }
+
+        /* --- CONTEÚDO --- */
+        .screen-content {
+            height: 100%;
+            overflow-y: auto;
+            padding-bottom: 90px; /* Espaço para a tab bar */
+        }
+
+        .header {
+            padding: 50px 20px 10px 20px;
+            background-color: var(--bg-body);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 34px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* --- BARRA DE BUSCA --- */
+        .search-bar {
+            margin: 10px 20px;
+            background-color: var(--bg-input);
+            border-radius: 10px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .search-bar ion-icon {
+            color: var(--text-secondary);
+        }
+        .search-bar input {
+            border: none;
+            background: transparent;
+            font-size: 17px;
+            width: 100%;
+            color: var(--text-primary);
+            outline: none;
+        }
+
+        /* --- LISTAS ESTILO IOS --- */
+        .ios-list {
+            margin-top: 20px;
+            background-color: var(--bg-card);
+            border-radius: 12px; /* Em telas menores seria full width, mas aqui fica card style */
+            margin-left: 16px;
+            margin-right: 16px;
+            overflow: hidden;
+        }
+
+        .list-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .list-item:active {
+            background-color: var(--bg-input);
+        }
+
+        /* Linha separadora, exceto no último item */
+        .list-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            left: 60px; /* Espaço do ícone */
+            height: 1px;
+            background-color: var(--border-color);
+        }
+
+        /* Avatar / Ícone à esquerda */
+        .item-icon {
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 15px;
+            font-size: 20px;
+            color: white;
+        }
+
+        /* Cores dos ícones */
+        .bg-blue { background-color: var(--ios-blue); }
+        .bg-green { background-color: var(--ios-green); }
+        .bg-red { background-color: var(--ios-red); }
+        .bg-gray { background-color: var(--ios-gray); }
+
+        .item-content {
+            flex: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .item-title {
+            font-size: 17px;
+            color: var(--text-primary);
+        }
+
+        .item-arrow {
+            color: var(--text-secondary);
+            font-size: 18px;
+        }
+
+        /* --- PERFIL HEADER --- */
+        .profile-header {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background-color: var(--bg-card);
+            margin: 16px;
+            border-radius: 12px;
+        }
+        .avatar-large {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-image: url('https://i.pravatar.cc/150?img=12'); /* Avatar falso */
+            background-size: cover;
+            margin-right: 15px;
+        }
+        .profile-info h2 {
+            font-size: 20px;
+            color: var(--text-primary);
+        }
+        .profile-info p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        .qr-code {
+            margin-left: auto;
+            background: var(--bg-input);
+            padding: 8px;
+            border-radius: 50%;
+            color: var(--ios-blue);
+        }
+
+        /* --- TOGGLE SWITCH (O SEGREDO DO MODO ESCURO) --- */
+        .toggle-switch {
+            position: relative;
+            width: 51px;
+            height: 31px;
+            background-color: var(--bg-input);
+            border-radius: 31px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        /* Estado Ativo (Verde) */
+        .toggle-checkbox:checked + .toggle-switch {
+            background-color: var(--ios-green);
+        }
+
+        .toggle-knob {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 27px;
+            height: 27px;
+            background-color: white;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: 0.3s;
+        }
+
+        .toggle-checkbox:checked + .toggle-switch .toggle-knob {
+            transform: translateX(20px);
+        }
+
+        .toggle-checkbox {
+            display: none;
+        }
+
+        /* --- TAB BAR INFERIOR --- */
+        .tab-bar {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 85px;
+            background-color: var(--nav-bg);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            padding-top: 10px;
+        }
+
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        .tab-item ion-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .tab-item.active {
+            color: var(--ios-blue);
+        }
+
+        /* Watusi Badge */
+        .watusi-badge {
+            background: var(--ios-blue);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="iphone-frame">
+        <div class="notch"></div>
+
+        <div class="screen-content">
+            
+            <div class="header">
+                <h1>Configurações</h1>
+            </div>
+
+            <div class="search-bar">
+                <ion-icon name="search"></ion-icon>
+                <input type="text" placeholder="Buscar">
+            </div>
+
+            <div class="profile-header">
+                <div class="avatar-large"></div>
+                <div class="profile-info">
+                    <h2>Seu Usuário ✨</h2>
+                    <p>Disponível • At work</p>
+                </div>
+                <div class="qr-code">
+                    <ion-icon name="qr-code-outline"></ion-icon>
+                </div>
+            </div>
+
+            <div class="ios-list">
+                <div class="list-item">
+                    <div class="item-icon bg-blue">
+                        <ion-icon name="options-outline"></ion-icon>
+                    </div>
+                    <div class="item-content">
+                        <span class="item-title">Preferências Watusi 3 <span class="watusi-badge">PRO</span></span>
+                        <ion-icon name="chevron-forward-outline" class="item-arrow"></ion-icon>
+                    </div>
+                </div>
+                <div class="list-item">
+                    <div class="item-icon" style="background-color: #f7a000;">
+                        <ion-icon name="star"></ion-icon>
+                    </div>
+                    <div class="item-content">
+                        <span class="item-title">Mensagens Favoritas</span>
+                        <ion-icon name="chevron-forward-outline" class="item-arrow"></ion-icon>
+                    </div>
+                </div>
+                <div class="list-item">
+                    <div class="item-icon bg-green">
+                        <ion-icon name="laptop-outline"></ion-icon>
+                    </div>
+                    <div class="item-content">
+                        <span class="item-title">Aparelhos Conectados</span>
+                        <ion-icon name="chevron-forward-outline" class="item-arrow"></ion-icon>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ios-list">
+                <div class="list-item">
+                    <div class="item-icon" style="background-color: #000;">
+                        <ion-icon name="moon"></ion-icon>
+                    </div>
+                    <div class="item-content">
+                        <span class="item-title">Modo Escuro</span>
+                        <label>
+                            <input type="checkbox" class="toggle-checkbox" id="darkModeToggle">
+                            <div class="toggle-switch">
+                                <div class="toggle-knob"></div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="list-item">
+                    <div class="item-icon bg-blue">
+                        <ion-icon name="key-outline"></ion-icon>
+                    </div>
+                    <div class="item-content">
+                        <span class="item-title">Conta</span>
+                        <ion-icon name="chevron-forward-outline" class="item-arrow"></ion-icon>
+                    </div>
+                </div>
+                <div class="list-item">
+                    <div class="item-icon" style="background-color: #5ac8fa;">
+                        <ion-icon name="lock-closed-outline"></ion-icon>
+                    </div>
+                    <div class="item-content">
+                        <span class="item-title">Privacidade</span>
+                        <ion-icon name="chevron-forward-outline" class="item-arrow"></ion-icon>
+                    </div>
+                </div>
+                <div class="list-item">
+                    <div class="item-icon bg-green">
+                        <ion-icon name="chatbubbles-outline"></ion-icon>
+                    </div>
+                    <div class="item-content">
+                        <span class="item-title">Conversas</span>
+                        <ion-icon name="chevron-forward-outline" class="item-arrow"></ion-icon>
+                    </div>
+                </div>
+                <div class="list-item">
+                    <div class="item-icon bg-red">
+                        <ion-icon name="notifications-outline"></ion-icon>
+                    </div>
+                    <div class="item-content">
+                        <span class="item-title">Notificações</span>
+                        <ion-icon name="chevron-forward-outline" class="item-arrow"></ion-icon>
+                    </div>
+                </div>
+            </div>
+
+            <p style="text-align: center; color: var(--text-secondary); margin: 20px; font-size: 13px;">
+                WhatsApp Clone v3.0<br>Designed for You ❤️
+            </p>
+
+        </div>
+
+        <div class="tab-bar">
+            <div class="tab-item">
+                <ion-icon name="ellipse-outline"></ion-icon>
+                <span>Status</span>
+            </div>
+            <div class="tab-item">
+                <ion-icon name="call-outline"></ion-icon>
+                <span>Ligações</span>
+            </div>
+            <div class="tab-item">
+                <ion-icon name="camera-outline"></ion-icon>
+                <span>Câmera</span>
+            </div>
+            <div class="tab-item">
+                <ion-icon name="chatbubble-outline"></ion-icon>
+                <span>Conversas</span>
+            </div>
+            <div class="tab-item active">
+                <ion-icon name="settings"></ion-icon>
+                <span>Config</span>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Elementos
+        const toggle = document.getElementById('darkModeToggle');
+        const body = document.body;
+
+        // Função para ativar o Dark Mode
+        toggle.addEventListener('change', (e) => {
+            if(e.target.checked) {
+                body.classList.add('dark-mode');
+            } else {
+                body.classList.remove('dark-mode');
+            }
+        });
+
+        // Efeitinho de clique na Tab Bar (para parecer real)
+        const tabs = document.querySelectorAll('.tab-item');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active')); // Remove dos outros
+                tabs.forEach(t => t.querySelector('ion-icon').name = t.querySelector('ion-icon').name.replace('-outline', '') + '-outline'); // "Despreeche" os icones
+                
+                // Ativa o atual
+                tab.classList.add('active');
+                
+                // Troca ícone para preenchido (estilo iOS)
+                const icon = tab.querySelector('ion-icon');
+                let iconName = icon.getAttribute('name');
+                if(iconName.includes('-outline')) {
+                    icon.setAttribute('name', iconName.replace('-outline', ''));
+                }
+            });
+        });
+    </script>
+</body>
+</html>
