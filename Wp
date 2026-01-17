@@ -1,488 +1,1621 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp iOS Clone - Dark Mode</title>
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  ChevronLeft, 
+  ChevronRight,
+  Phone, 
+  Video, 
+  Plus, 
+  Camera, 
+  Mic, 
+  MoreHorizontal, 
+  Search, 
+  Edit, 
+  SquarePen, 
+  CircleDashed,
+  Users,
+  MessageCircle,
+  Settings,
+  Check,
+  CheckCheck,
+  ArrowLeft,
+  Info,
+  QrCode,
+  Key,
+  Lock,
+  Bell,
+  Database,
+  HelpCircle,
+  Heart,
+  Trash2,
+  Archive,
+  Star,
+  Image as ImageIcon,
+  Volume2,
+  Download,
+  Timer,
+  ShieldBan,
+  ThumbsDown,
+  Share,
+  Monitor,
+  Smartphone,
+  Globe,
+  Moon,
+  Laptop,
+  LogOut,
+  Shield,
+  FileText,
+  Wifi,
+  MapPin,
+  Block,
+  SmartphoneNfc
+} from 'lucide-react';
+import { ImageWithFallback } from './components/figma/ImageWithFallback';
+import { motion, useAnimation, PanInfo } from 'motion/react';
+
+// --- MOCK DATA ---
+const INITIAL_USERS = [
+  {
+    id: 1,
+    name: "Ana Silva",
+    avatar: "https://images.unsplash.com/photo-1734764627105-b5ff03f02b2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwb3J0cmFpdCUyMHdvbWFuJTIwc21pbGV8ZW58MXx8fHwxNzY4NDUyNzk1fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+    lastMessage: "Oi! Tudo bem com você?",
+    time: "10:30",
+    unread: 2,
+    online: true,
+    hasStatus: true,
+    statusImage: "https://images.unsplash.com/photo-1571751235607-2acc04bd27d4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxuYXR1cmUlMjB2ZXJ0aWNhbCUyMGxhbmRzY2FwZSUyMHN0b3J5fGVufDF8fHx8MTc2ODU2MjUwNHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+    statusTime: "há 30 min",
+    archived: false,
+    phoneNumber: "+55 11 99999-0001",
+    statusText: "Aproveitando o dia! ☀️",
+    statusDate: "15 de ago. de 2025"
+  },
+  {
+    id: 2,
+    name: "João Pereira",
+    avatar: "https://images.unsplash.com/photo-1672685667592-0392f458f46f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwb3J0cmFpdCUyW1hbiUyMHByb2Zlc3Npb25hbHxlbnwxfHx8fDE3Njg1MTYwMzd8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+    lastMessage: "Te envio o documento mais tarde.",
+    time: "Ontem",
+    unread: 0,
+    read: true, 
+    hasStatus: false,
+    statusImage: "",
+    statusTime: "",
+    archived: false,
+    phoneNumber: "+55 11 98888-0002",
+    statusText: "No trabalho 💻",
+    statusDate: "10 de set. de 2025"
+  },
+  {
+    id: 3,
+    name: "Mariana Costa",
+    avatar: "https://images.unsplash.com/photo-1546961329-78bef0414d7c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwb3J0cmFpdCUyMHlvdW5nJTIwd29tYW58ZW58MXx8fHwxNzY4NDcwMTEyfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+    lastMessage: "Amei as fotos! 😍",
+    time: "Ontem",
+    unread: 0,
+    read: false,
+    hasStatus: true,
+    statusImage: "https://images.unsplash.com/photo-1592781959616-a5b5df495c40?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb2ZmZWUlMjBjdXAlMjB2ZXJ0aWNhbCUyMHN0b3J5fGVufDF8fHx8MTc2ODU2MjUwNHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+    statusTime: "há 2h",
+    archived: false,
+    phoneNumber: "+55 21 97777-0003",
+    statusText: "Vivendo e aprendendo ✨",
+    statusDate: "05 de out. de 2025"
+  },
+  {
+    id: 4,
+    name: "Carlos Souza",
+    avatar: "https://images.unsplash.com/photo-1669206053726-bfafe8d4537f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwb3J0cmFpdCUyMGZhY2UlMjBwZXJzb258ZW58MXx8fHwxNzY4NDcwMTk0fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+    lastMessage: "Vamos marcar aquele café?",
+    time: "Sexta",
+    unread: 5,
+    online: false,
+    hasStatus: true,
+    statusImage: "https://images.unsplash.com/photo-1619527762865-7277bd36c3ef?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmb29kJTIwcGxhdGUlMjB2ZXJ0aWNhbCUyMHN0b3J5fGVufDF8fHx8MTc2ODU2MjUwNHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+    statusTime: "há 5h",
+    archived: false,
+    phoneNumber: "+55 31 96666-0004",
+    statusText: "Bateria social: 1% 🔋",
+    statusDate: "20 de nov. de 2025"
+  },
+  {
+    id: 5,
+    name: "Roberto Lima",
+    avatar: "https://images.unsplash.com/photo-1621986601685-534276f162db?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwb3J0cmFpdCUyMG9sZGVyJTIwbWFufGVufDF8fHx8MTc2ODU2MjIzMHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+    lastMessage: "Obrigado pela ajuda!",
+    time: "Quinta",
+    unread: 0,
+    read: true,
+    hasStatus: false,
+    statusImage: "",
+    statusTime: "",
+    archived: false,
+    phoneNumber: "+55 41 95555-0005",
+    statusText: "Disponível",
+    statusDate: "01 de jan. de 2026"
+  },
+  {
+    id: 6,
+    name: "Júlia Mendes",
+    avatar: "https://images.unsplash.com/photo-1664312557922-8fe1a7425425?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwb3J0cmFpdCUyMGhhcHB5JTIwZ2lybHxlbnwxfHx8fDE3Njg1NjIyMzB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+    lastMessage: "Kkkkkkk verdade",
+    time: "Quinta",
+    unread: 0,
+    read: true,
+    hasStatus: true,
+    statusImage: "https://images.unsplash.com/photo-1612073584622-335da5fadd8a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxneW0lMjB3b3Jrb3V0JTIwdmVydGljYWwlMjBzdG9yeXxlbnwxfHx8fDE3Njg1NjI1MDR8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+    statusTime: "há 8h",
+    archived: false,
+    phoneNumber: "+55 51 94444-0006",
+    statusText: "Gym rat 💪",
+    statusDate: "12 de dez. de 2025"
+  }
+];
+
+const CALL_HISTORY = [
+  { id: 1, userId: 1, type: 'incoming', status: 'missed', date: 'Hoje', time: '10:45', video: false },
+  { id: 2, userId: 2, type: 'outgoing', status: 'connected', date: 'Ontem', time: '14:20', video: true },
+  { id: 3, userId: 4, type: 'incoming', status: 'connected', date: 'Sexta', time: '18:30', video: false },
+  { id: 4, userId: 1, type: 'outgoing', status: 'missed', date: 'Sexta', time: '18:00', video: false },
+];
+
+const MY_AVATAR = "https://images.unsplash.com/photo-1599566150163-29194dcaad36?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhdmF0YXJ8ZW58MXx8fHwxNzY4NDcwMTEyfDA&ixlib=rb-4.1.0&q=80&w=1080";
+
+// --- REUSABLE DYNAMIC HEADER COMPONENT ---
+interface IOSScreenProps {
+  title: string;
+  leftAction?: React.ReactNode;
+  rightAction?: React.ReactNode;
+  children: React.ReactNode;
+  headerContent?: React.ReactNode; 
+  showDynamicHeader?: boolean;
+}
+
+const IOSScreenWrapper = ({ title, leftAction, rightAction, children, headerContent, showDynamicHeader = true }: IOSScreenProps) => {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [headerOpacity, setHeaderOpacity] = useState(1);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const handleScroll = () => {
+    if (!showDynamicHeader) return;
     
-    <style>
-        /* --- CONFIGURAÇÕES GERAIS E VARIÁVEIS (A MÁGICA DO TEMA) --- */
-        :root {
-            --ios-blue: #007AFF;
-            --ios-green: #34C759;
-            --ios-gray: #8E8E93;
-            --ios-red: #FF3B30;
-            --separator: #c6c6c8;
-            
-            /* Variáveis Light Mode (Padrão) */
-            --bg-body: #f2f2f7;
-            --bg-card: #ffffff;
-            --text-primary: #000000;
-            --text-secondary: #8a8a8e;
-            --bg-input: #e3e3e8;
-            --nav-bg: rgba(249, 249, 249, 0.9);
-            --border-color: rgba(0,0,0,0.1);
-        }
+    if (scrollRef.current) {
+      const scrollTop = scrollRef.current.scrollTop;
+      const threshold = 40;
+      setIsScrolled(scrollTop > threshold);
+      const newOpacity = Math.max(0, 1 - (scrollTop / 60));
+      setHeaderOpacity(newOpacity);
+    }
+  };
 
-        /* Variáveis Dark Mode */
-        body.dark-mode {
-            --bg-body: #000000;
-            --bg-card: #1c1c1e;
-            --text-primary: #ffffff;
-            --text-secondary: #98989f;
-            --bg-input: #2c2c2e;
-            --nav-bg: rgba(30, 30, 30, 0.9);
-            --border-color: rgba(255,255,255,0.1);
-            --separator: #38383a;
-        }
+  return (
+    <div className="flex flex-col h-full bg-black relative">
+      {/* Fixed Top Bar */}
+      <div 
+        className={`absolute top-0 w-full z-20 px-4 pt-10 sm:pt-4 pb-3 flex justify-between items-center transition-all duration-300
+          ${isScrolled || !showDynamicHeader ? 'bg-[#161616]/95 backdrop-blur-md border-b border-[#2C2C2E] shadow-sm' : 'bg-transparent'}`}
+      >
+         <div className="flex-1 flex justify-start z-30">
+            {leftAction}
+         </div>
+         
+         <div className={`absolute left-0 right-0 flex justify-center pointer-events-none transition-opacity duration-300 ${isScrolled || !showDynamicHeader ? 'opacity-100' : 'opacity-0'}`}>
+            <span className="font-semibold text-[17px] text-white">{title}</span>
+         </div>
 
-        * {
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
+         <div className="flex-1 flex justify-end z-30">
+            {rightAction}
+         </div>
+      </div>
 
-        body {
-            background-color: #202020; /* Fundo do PC */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        /* --- A MOLDURA DO IPHONE --- */
-        .iphone-frame {
-            width: 375px;
-            height: 812px;
-            background-color: var(--bg-body);
-            border-radius: 40px;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            border: 8px solid #333;
-        }
-
-        /* Notch (Detalhe estético) */
-        .notch {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 50%;
-            height: 30px;
-            background-color: #333;
-            border-bottom-left-radius: 20px;
-            border-bottom-right-radius: 20px;
-            z-index: 100;
-        }
-
-        /* --- CONTEÚDO --- */
-        .screen-content {
-            height: 100%;
-            overflow-y: auto;
-            padding-bottom: 90px; /* Espaço para a tab bar */
-        }
-
-        .header {
-            padding: 50px 20px 10px 20px;
-            background-color: var(--bg-body);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        h1 {
-            font-size: 34px;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        /* --- BARRA DE BUSCA --- */
-        .search-bar {
-            margin: 10px 20px;
-            background-color: var(--bg-input);
-            border-radius: 10px;
-            padding: 8px 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .search-bar ion-icon {
-            color: var(--text-secondary);
-        }
-        .search-bar input {
-            border: none;
-            background: transparent;
-            font-size: 17px;
-            width: 100%;
-            color: var(--text-primary);
-            outline: none;
-        }
-
-        /* --- LISTAS ESTILO IOS --- */
-        .ios-list {
-            margin-top: 20px;
-            background-color: var(--bg-card);
-            border-radius: 12px; /* Em telas menores seria full width, mas aqui fica card style */
-            margin-left: 16px;
-            margin-right: 16px;
-            overflow: hidden;
-        }
-
-        .list-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 16px;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .list-item:active {
-            background-color: var(--bg-input);
-        }
-
-        /* Linha separadora, exceto no último item */
-        .list-item:not(:last-child)::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            left: 60px; /* Espaço do ícone */
-            height: 1px;
-            background-color: var(--border-color);
-        }
-
-        /* Avatar / Ícone à esquerda */
-        .item-icon {
-            width: 35px;
-            height: 35px;
-            border-radius: 8px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-right: 15px;
-            font-size: 20px;
-            color: white;
-        }
-
-        /* Cores dos ícones */
-        .bg-blue { background-color: var(--ios-blue); }
-        .bg-green { background-color: var(--ios-green); }
-        .bg-red { background-color: var(--ios-red); }
-        .bg-gray { background-color: var(--ios-gray); }
-
-        .item-content {
-            flex: 1;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .item-title {
-            font-size: 17px;
-            color: var(--text-primary);
-        }
-
-        .item-arrow {
-            color: var(--text-secondary);
-            font-size: 18px;
-        }
-
-        /* --- PERFIL HEADER --- */
-        .profile-header {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            background-color: var(--bg-card);
-            margin: 16px;
-            border-radius: 12px;
-        }
-        .avatar-large {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background-image: url('https://i.pravatar.cc/150?img=12'); /* Avatar falso */
-            background-size: cover;
-            margin-right: 15px;
-        }
-        .profile-info h2 {
-            font-size: 20px;
-            color: var(--text-primary);
-        }
-        .profile-info p {
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin-top: 4px;
-        }
-        .qr-code {
-            margin-left: auto;
-            background: var(--bg-input);
-            padding: 8px;
-            border-radius: 50%;
-            color: var(--ios-blue);
-        }
-
-        /* --- TOGGLE SWITCH (O SEGREDO DO MODO ESCURO) --- */
-        .toggle-switch {
-            position: relative;
-            width: 51px;
-            height: 31px;
-            background-color: var(--bg-input);
-            border-radius: 31px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
+      {/* Scrollable Content */}
+      <div 
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto pb-24 bg-black [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+      >
+        <div className="h-[52px] sm:h-[40px] bg-black" /> 
         
-        /* Estado Ativo (Verde) */
-        .toggle-checkbox:checked + .toggle-switch {
-            background-color: var(--ios-green);
-        }
+        {headerContent && (
+           <div 
+              className="bg-black px-4 pb-2 flex flex-col"
+              style={{ 
+                opacity: showDynamicHeader ? headerOpacity : 0, 
+                display: showDynamicHeader ? 'flex' : 'none',
+                pointerEvents: headerOpacity === 0 ? 'none' : 'auto'
+              }}
+           >
+               {headerContent}
+           </div>
+        )}
 
-        .toggle-knob {
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            width: 27px;
-            height: 27px;
-            background-color: white;
-            border-radius: 50%;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            transition: 0.3s;
-        }
-
-        .toggle-checkbox:checked + .toggle-switch .toggle-knob {
-            transform: translateX(20px);
-        }
-
-        .toggle-checkbox {
-            display: none;
-        }
-
-        /* --- TAB BAR INFERIOR --- */
-        .tab-bar {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            height: 85px;
-            background-color: var(--nav-bg);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-around;
-            padding-top: 10px;
-        }
-
-        .tab-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 10px;
-            font-weight: 500;
-        }
-
-        .tab-item ion-icon {
-            font-size: 24px;
-            margin-bottom: 4px;
-        }
-
-        .tab-item.active {
-            color: var(--ios-blue);
-        }
-
-        /* Watusi Badge */
-        .watusi-badge {
-            background: var(--ios-blue);
-            color: white;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-left: 5px;
-        }
-
-    </style>
-</head>
-<body>
-
-    <div class="iphone-frame">
-        <div class="notch"></div>
-
-        <div class="screen-content">
-            
-            <div class="header">
-                <h1>Configurações</h1>
-            </div>
-
-            <div class="search-bar">
-                <ion-icon name="search"></ion-icon>
-                <input type="text" placeholder="Buscar">
-            </div>
-
-            <div class="profile-header">
-                <div class="avatar-large"></div>
-                <div class="profile-info">
-                    <h2>Seu Usuário ✨</h2>
-                    <p>Disponível • At work</p>
-                </div>
-                <div class="qr-code">
-                    <ion-icon name="qr-code-outline"></ion-icon>
-                </div>
-            </div>
-
-            <div class="ios-list">
-                <div class="list-item">
-                    <div class="item-icon bg-blue">
-                        <ion-icon name="options-outline"></ion-icon>
-                    </div>
-                    <div class="item-content">
-                        <span class="item-title">Preferências Watusi 3 <span class="watusi-badge">PRO</span></span>
-                        <ion-icon name="chevron-forward-outline" class="item-arrow"></ion-icon>
-                    </div>
-                </div>
-                <div class="list-item">
-                    <div class="item-icon" style="background-color: #f7a000;">
-                        <ion-icon name="star"></ion-icon>
-                    </div>
-                    <div class="item-content">
-                        <span class="item-title">Mensagens Favoritas</span>
-                        <ion-icon name="chevron-forward-outline" class="item-arrow"></ion-icon>
-                    </div>
-                </div>
-                <div class="list-item">
-                    <div class="item-icon bg-green">
-                        <ion-icon name="laptop-outline"></ion-icon>
-                    </div>
-                    <div class="item-content">
-                        <span class="item-title">Aparelhos Conectados</span>
-                        <ion-icon name="chevron-forward-outline" class="item-arrow"></ion-icon>
-                    </div>
-                </div>
-            </div>
-
-            <div class="ios-list">
-                <div class="list-item">
-                    <div class="item-icon" style="background-color: #000;">
-                        <ion-icon name="moon"></ion-icon>
-                    </div>
-                    <div class="item-content">
-                        <span class="item-title">Modo Escuro</span>
-                        <label>
-                            <input type="checkbox" class="toggle-checkbox" id="darkModeToggle">
-                            <div class="toggle-switch">
-                                <div class="toggle-knob"></div>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="list-item">
-                    <div class="item-icon bg-blue">
-                        <ion-icon name="key-outline"></ion-icon>
-                    </div>
-                    <div class="item-content">
-                        <span class="item-title">Conta</span>
-                        <ion-icon name="chevron-forward-outline" class="item-arrow"></ion-icon>
-                    </div>
-                </div>
-                <div class="list-item">
-                    <div class="item-icon" style="background-color: #5ac8fa;">
-                        <ion-icon name="lock-closed-outline"></ion-icon>
-                    </div>
-                    <div class="item-content">
-                        <span class="item-title">Privacidade</span>
-                        <ion-icon name="chevron-forward-outline" class="item-arrow"></ion-icon>
-                    </div>
-                </div>
-                <div class="list-item">
-                    <div class="item-icon bg-green">
-                        <ion-icon name="chatbubbles-outline"></ion-icon>
-                    </div>
-                    <div class="item-content">
-                        <span class="item-title">Conversas</span>
-                        <ion-icon name="chevron-forward-outline" class="item-arrow"></ion-icon>
-                    </div>
-                </div>
-                <div class="list-item">
-                    <div class="item-icon bg-red">
-                        <ion-icon name="notifications-outline"></ion-icon>
-                    </div>
-                    <div class="item-content">
-                        <span class="item-title">Notificações</span>
-                        <ion-icon name="chevron-forward-outline" class="item-arrow"></ion-icon>
-                    </div>
-                </div>
-            </div>
-
-            <p style="text-align: center; color: var(--text-secondary); margin: 20px; font-size: 13px;">
-                WhatsApp Clone v3.0<br>Designed for You ❤️
-            </p>
-
+        <div className="bg-black min-h-[calc(100%-200px)]">
+           {children}
         </div>
-
-        <div class="tab-bar">
-            <div class="tab-item">
-                <ion-icon name="ellipse-outline"></ion-icon>
-                <span>Status</span>
-            </div>
-            <div class="tab-item">
-                <ion-icon name="call-outline"></ion-icon>
-                <span>Ligações</span>
-            </div>
-            <div class="tab-item">
-                <ion-icon name="camera-outline"></ion-icon>
-                <span>Câmera</span>
-            </div>
-            <div class="tab-item">
-                <ion-icon name="chatbubble-outline"></ion-icon>
-                <span>Conversas</span>
-            </div>
-            <div class="tab-item active">
-                <ion-icon name="settings"></ion-icon>
-                <span>Config</span>
-            </div>
-        </div>
-
+        
+        <div className="h-20" />
+      </div>
     </div>
+  );
+};
 
-    <script>
-        // Elementos
-        const toggle = document.getElementById('darkModeToggle');
-        const body = document.body;
+// --- SUB-COMPONENTS ---
 
-        // Função para ativar o Dark Mode
-        toggle.addEventListener('change', (e) => {
-            if(e.target.checked) {
-                body.classList.add('dark-mode');
-            } else {
-                body.classList.remove('dark-mode');
-            }
-        });
+const SwipeableChatRow = ({ user, index, isLast, onClick, onArchive, onDelete, isArchivedView = false }: any) => {
+  const controls = useAnimation();
+  
+  const handleDragEnd = async (event: any, info: PanInfo) => {
+    const offset = info.offset.x;
+    if (offset < -70) {
+       await controls.start({ x: -160 });
+    } else {
+       await controls.start({ x: 0 });
+    }
+  };
 
-        // Efeitinho de clique na Tab Bar (para parecer real)
-        const tabs = document.querySelectorAll('.tab-item');
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                tabs.forEach(t => t.classList.remove('active')); // Remove dos outros
-                tabs.forEach(t => t.querySelector('ion-icon').name = t.querySelector('ion-icon').name.replace('-outline', '') + '-outline'); // "Despreeche" os icones
-                
-                // Ativa o atual
-                tab.classList.add('active');
-                
-                // Troca ícone para preenchido (estilo iOS)
-                const icon = tab.querySelector('ion-icon');
-                let iconName = icon.getAttribute('name');
-                if(iconName.includes('-outline')) {
-                    icon.setAttribute('name', iconName.replace('-outline', ''));
-                }
-            });
-        });
-    </script>
-</body>
-</html>
+  const closeSwipe = () => {
+    controls.start({ x: 0 });
+  };
+
+  return (
+    <div className="relative overflow-hidden bg-[#3a3a3c]">
+      <div className="absolute inset-y-0 right-0 flex w-[160px]">
+        <button 
+          onClick={() => { onArchive(user.id); closeSwipe(); }}
+          className="bg-[#5C5C5E] text-white w-[80px] flex flex-col items-center justify-center gap-1 font-medium"
+        >
+          <Archive size={24} />
+          <span className="text-[13px]">{isArchivedView ? "Desarquivar" : "Arquivar"}</span>
+        </button>
+        <button 
+          onClick={() => { onDelete(user.id); closeSwipe(); }}
+          className="bg-[#FF453A] text-white w-[80px] flex flex-col items-center justify-center gap-1 font-medium"
+        >
+          <Trash2 size={24} />
+          <span className="text-[13px]">Apagar</span>
+        </button>
+      </div>
+
+      <motion.div 
+        drag="x"
+        dragConstraints={{ left: -160, right: 0 }}
+        dragElastic={0.1}
+        onDragEnd={handleDragEnd}
+        animate={controls}
+        style={{ x: 0 }}
+        className="bg-black relative z-10"
+      >
+        <div 
+           onClick={onClick}
+           className="flex items-center px-4 active:bg-[#1C1C1E] transition-colors cursor-pointer bg-black"
+        >
+           <div className="py-2 pr-3">
+             <div className="w-[58px] h-[58px] rounded-full overflow-hidden bg-[#2C2C2E]">
+               <ImageWithFallback src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+             </div>
+           </div>
+           
+           <div className={`flex-1 flex flex-col justify-center py-3 min-h-[74px] ${!isLast ? 'border-b border-[#2C2C2E]' : ''}`}>
+              <div className="flex justify-between items-baseline mb-0.5">
+                 <h3 className="text-[17px] font-semibold text-white">{user.name}</h3>
+                 <span className={`text-[14px] ${user.unread > 0 ? 'text-[#0A84FF]' : 'text-[#8E8E93]'}`}>
+                   {user.time}
+                 </span>
+              </div>
+              
+              <div className="flex justify-between items-center">
+                 <p className="text-[15px] text-[#8E8E93] line-clamp-2 leading-snug flex-1 pr-4 flex items-center gap-1">
+                    {user.unread === 0 && (
+                      user.read 
+                       ? <CheckCheck size={16} className="text-[#34B7F1]" />
+                       : <Check size={16} className="text-[#8E8E93]" />
+                    )}
+                    {user.lastMessage}
+                 </p>
+                 
+                 {user.unread > 0 && (
+                   <div className="bg-[#0A84FF] text-white text-[13px] font-bold px-2 min-w-[20px] h-[20px] rounded-full flex items-center justify-center">
+                     {user.unread}
+                   </div>
+                 )}
+              </div>
+           </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+const Switch = ({ checked, onChange }: any) => (
+  <div 
+    onClick={(e) => { e.stopPropagation(); onChange(!checked); }}
+    className={`w-[51px] h-[31px] rounded-full p-[2px] cursor-pointer transition-colors ${checked ? 'bg-[#30D158]' : 'bg-[#39393D]'}`}
+  >
+    <div className={`w-[27px] h-[27px] bg-white rounded-full shadow-sm transition-transform ${checked ? 'translate-x-[20px]' : 'translate-x-0'}`} />
+  </div>
+);
+
+const SettingsSubScreen = ({ title, onBack, children }: any) => (
+  <IOSScreenWrapper
+    title={title}
+    leftAction={
+      <button onClick={onBack} className="flex items-center text-[#0A84FF] gap-1 -ml-2">
+        <ChevronLeft size={22} strokeWidth={2} />
+        <span className="text-[17px] font-normal leading-none -ml-1">Voltar</span>
+      </button>
+    }
+    showDynamicHeader={false}
+  >
+    {children}
+  </IOSScreenWrapper>
+);
+
+const StarredMessagesView = ({ onBack }: any) => (
+  <SettingsSubScreen title="Mensagens Favoritas" onBack={onBack}>
+     <div className="flex flex-col items-center justify-center pt-32 px-10 text-center">
+        <div className="w-24 h-24 bg-[#1C1C1E] rounded-full flex items-center justify-center mb-4">
+           <Star size={48} className="text-[#8E8E93]" fill="#8E8E93" />
+        </div>
+        <h3 className="text-[20px] font-bold text-white mb-2">Nenhuma mensagem favorita</h3>
+        <p className="text-[15px] text-[#8E8E93]">
+           Toque e segure uma mensagem em qualquer conversa para favoritá-la, assim você pode encontrá-la facilmente depois.
+        </p>
+     </div>
+  </SettingsSubScreen>
+);
+
+const LinkedDevicesView = ({ onBack }: any) => (
+  <SettingsSubScreen title="Aparelhos Conectados" onBack={onBack}>
+     <div className="flex flex-col items-center pt-8 pb-8 px-4 border-b border-[#2C2C2E]">
+        <div className="mb-6">
+           <Laptop size={120} className="text-[#8E8E93] opacity-50" />
+        </div>
+        <h2 className="text-[24px] font-bold text-white mb-2">Use o WhatsApp em outros aparelhos</h2>
+        <button className="bg-[#0A84FF] text-white font-semibold text-[17px] py-3 px-8 rounded-full mt-4 w-full max-w-xs">
+           Conectar um aparelho
+        </button>
+     </div>
+     <div className="mt-8 px-4">
+         <h3 className="text-[#8E8E93] text-[13px] uppercase mb-2 pl-4">Status do aparelho</h3>
+         <p className="text-[#8E8E93] text-[15px] pl-4 mb-4">
+            Toque em um aparelho para desconectá-lo.
+         </p>
+         <div className="bg-[#1C1C1E] rounded-xl overflow-hidden">
+             <div className="flex items-center p-4 active:bg-[#2C2C2E] cursor-pointer">
+                 <div className="mr-4">
+                    <Monitor size={32} className="text-[#0A84FF]" />
+                 </div>
+                 <div className="flex-1">
+                    <h4 className="text-[17px] font-semibold text-white">Google Chrome (Windows)</h4>
+                    <p className="text-[15px] text-[#8E8E93]">Ativo agora</p>
+                 </div>
+             </div>
+         </div>
+     </div>
+  </SettingsSubScreen>
+);
+
+const SecurityNotificationsView = ({ onBack }: any) => {
+  const [showSecurityNotif, setShowSecurityNotif] = useState(false);
+  
+  return (
+    <SettingsSubScreen title="Notificações de segurança" onBack={onBack}>
+       <div className="flex flex-col items-center pt-8 pb-4 px-6 text-center">
+          <div className="w-24 h-24 bg-[#1C1C1E] rounded-full flex items-center justify-center mb-6">
+             <Shield size={48} className="text-[#30D158]" fill="#30D158" />
+          </div>
+          <h2 className="text-[24px] font-bold text-white mb-2">O WhatsApp protege sua privacidade</h2>
+          <p className="text-[15px] text-[#8E8E93] mb-6">
+             As mensagens e as chamadas são protegidas com a criptografia de ponta a ponta. Nem mesmo o WhatsApp pode ler ou ouvir suas conversas.
+          </p>
+          <div className="w-full h-[1px] bg-[#2C2C2E] mb-6" />
+       </div>
+       
+       <div className="px-4">
+           <h3 className="text-[17px] font-semibold text-white mb-2 px-2">Mostrar notificações de segurança neste aparelho</h3>
+           <p className="text-[15px] text-[#8E8E93] mb-4 px-2">
+              Receba uma notificação quando o código de segurança de um contato mudar. As mensagens e as chamadas são sempre criptografadas, independentemente desta configuração.
+           </p>
+           
+           <div className="bg-[#1C1C1E] rounded-xl overflow-hidden">
+               <div className="flex items-center pl-4 py-2.5 pr-4 bg-[#1C1C1E]">
+                   <span className="text-[17px] text-white flex-1">Mostrar notificações de segurança</span>
+                   <Switch checked={showSecurityNotif} onChange={setShowSecurityNotif} />
+               </div>
+           </div>
+       </div>
+    </SettingsSubScreen>
+  );
+};
+
+const PasskeysView = ({ onBack }: any) => (
+  <SettingsSubScreen title="Chaves de acesso" onBack={onBack}>
+     <div className="flex flex-col items-center pt-10 px-6 text-center">
+        <div className="mb-6">
+           <Key size={80} className="text-[#0A84FF]" />
+        </div>
+        <h2 className="text-[24px] font-bold text-white mb-3">Uma maneira simples de acessar sua conta com segurança</h2>
+        <p className="text-[15px] text-[#8E8E93] mb-8 leading-relaxed">
+           Você pode usar a impressão digital, o reconhecimento facial ou o bloqueio de tela do seu aparelho para confirmar sua identidade com uma chave de acesso. Suas chaves de acesso são armazenadas com segurança no seu gerenciador de senhas.
+        </p>
+        <button className="bg-[#0A84FF] text-white font-semibold text-[17px] py-3.5 px-8 rounded-full w-full max-w-xs mb-4">
+           Criar chave de acesso
+        </button>
+        <button className="text-[#0A84FF] font-normal text-[17px] py-2">
+           Saiba mais
+        </button>
+     </div>
+  </SettingsSubScreen>
+);
+
+const EmailAddressView = ({ onBack }: any) => (
+  <SettingsSubScreen title="Endereço de e-mail" onBack={onBack}>
+     <div className="flex flex-col items-center pt-10 px-6">
+        <div className="w-20 h-20 bg-[#1C1C1E] rounded-full flex items-center justify-center mb-6">
+           <div className="text-[#0A84FF] text-3xl font-bold">@</div>
+        </div>
+        <p className="text-[15px] text-[#8E8E93] text-center mb-8 px-4">
+           O e-mail ajuda você a acessar sua conta. Ele não fica visível para outras pessoas.
+        </p>
+        
+        <div className="w-full bg-[#1C1C1E] rounded-xl px-4 py-3 flex items-center mb-2">
+            <input 
+               type="email" 
+               placeholder="Endereço de e-mail" 
+               className="bg-transparent text-white text-[17px] w-full outline-none placeholder-[#8E8E93]"
+            />
+        </div>
+        <p className="text-[13px] text-[#8E8E93] self-start ml-4 mb-8">
+           Pendente de verificação
+        </p>
+
+        <button className="bg-[#2C2C2E] text-[#636366] font-semibold text-[17px] py-3.5 px-8 rounded-full w-full max-w-xs cursor-not-allowed">
+           Avançar
+        </button>
+     </div>
+  </SettingsSubScreen>
+);
+
+const TwoStepVerificationView = ({ onBack }: any) => (
+  <SettingsSubScreen title="Confirmação em duas etapas" onBack={onBack}>
+      <div className="flex flex-col items-center pt-10 px-6 text-center">
+        <div className="mb-6 w-24 h-24 bg-[#1C1C1E] rounded-full flex items-center justify-center">
+           <div className="text-[#0A84FF] text-3xl font-bold tracking-widest">•••</div>
+        </div>
+        <h2 className="text-[20px] font-bold text-white mb-3">Confirmação em duas etapas</h2>
+        <p className="text-[15px] text-[#8E8E93] mb-8 leading-relaxed">
+           Para dar mais segurança à sua conta, ative a confirmação em duas etapas, que solicitará um PIN quando você registrar seu número de telefone no WhatsApp novamente.
+        </p>
+        <div className="bg-[#1C1C1E] rounded-xl w-full overflow-hidden">
+             <button className="w-full py-3 text-[#0A84FF] text-[17px] font-normal active:bg-[#2C2C2E]">
+                 Ativar
+             </button>
+        </div>
+     </div>
+  </SettingsSubScreen>
+);
+
+const ChangeNumberView = ({ onBack }: any) => (
+  <SettingsSubScreen title="Mudar número" onBack={onBack}>
+     <div className="flex flex-col items-center pt-12 px-6 text-center">
+        <div className="mb-8">
+           <Smartphone size={100} className="text-[#8E8E93] opacity-30" />
+        </div>
+        <h2 className="text-[22px] font-bold text-white mb-4">Mudar número</h2>
+        <p className="text-[15px] text-[#8E8E93] mb-8 leading-relaxed">
+           Ao mudar seu número de telefone, os dados da sua conta, os grupos e as configurações serão migrados.
+        </p>
+        <p className="text-[15px] text-[#8E8E93] mb-10 leading-relaxed">
+           Antes de prosseguir, confirme se seu novo número pode receber SMS ou chamadas.
+        </p>
+        <button className="bg-[#0A84FF] text-white font-semibold text-[17px] py-3.5 px-8 rounded-full w-full max-w-xs">
+           Avançar
+        </button>
+     </div>
+  </SettingsSubScreen>
+);
+
+const RequestAccountInfoView = ({ onBack }: any) => (
+  <SettingsSubScreen title="Solicitar dados da conta" onBack={onBack}>
+     <div className="px-4 py-6">
+         <div className="bg-[#1C1C1E] rounded-xl overflow-hidden mb-6 p-4 flex gap-4 items-start">
+             <div className="mt-1">
+                <FileText size={32} className="text-[#0A84FF]" />
+             </div>
+             <div>
+                <h3 className="text-[17px] font-semibold text-white mb-1">Relatório da conta</h3>
+                <p className="text-[15px] text-[#8E8E93] mb-3">
+                   Crie um relatório com as configurações e os dados da sua conta do WhatsApp. Você pode acessar ou portar essas informações para outro app. Esse relatório não inclui suas mensagens.
+                </p>
+                <button className="text-[#0A84FF] text-[17px] font-normal flex items-center gap-1">
+                   Solicitar relatório
+                </button>
+             </div>
+         </div>
+         <div className="bg-[#1C1C1E] rounded-xl overflow-hidden p-4 flex gap-4 items-start">
+             <div className="mt-1">
+                <MessageCircle size={32} className="text-[#0A84FF]" />
+             </div>
+             <div>
+                <h3 className="text-[17px] font-semibold text-white mb-1">Relatório dos canais</h3>
+                <p className="text-[15px] text-[#8E8E93] mb-3">
+                   Crie um relatório com informações e atualizações dos seus canais.
+                </p>
+                <button className="text-[#0A84FF] text-[17px] font-normal flex items-center gap-1">
+                   Solicitar relatório
+                </button>
+             </div>
+         </div>
+     </div>
+  </SettingsSubScreen>
+);
+
+const DeleteAccountView = ({ onBack }: any) => (
+  <SettingsSubScreen title="Apagar conta" onBack={onBack}>
+      <div className="px-4 py-6 space-y-6">
+          <div className="flex gap-4 items-start bg-[#1C1C1E] p-4 rounded-xl">
+              <ShieldBan size={28} className="text-[#FF453A] mt-1" />
+              <div>
+                  <h3 className="text-[17px] font-semibold text-white mb-1">Se você apagar sua conta:</h3>
+                  <ul className="text-[15px] text-[#8E8E93] list-disc pl-5 space-y-1">
+                      <li>Sua conta será apagada do WhatsApp</li>
+                      <li>Seu histórico de mensagens será apagado</li>
+                      <li>Você será removido de todos os seus grupos do WhatsApp</li>
+                  </ul>
+              </div>
+          </div>
+          
+          <div>
+              <h3 className="text-[17px] font-semibold text-white mb-2">Mudar número?</h3>
+              <p className="text-[15px] text-[#8E8E93] mb-4">
+                  Se você deseja migrar sua conta para um novo número de telefone, não apague sua conta. Em vez disso, mude seu número.
+              </p>
+              <button className="bg-[#1C1C1E] text-[#0A84FF] w-full py-3 rounded-xl font-medium">
+                  Mudar número
+              </button>
+          </div>
+
+          <div>
+              <h3 className="text-[17px] font-semibold text-white mb-2">Apagar sua conta</h3>
+              <p className="text-[15px] text-[#8E8E93] mb-4">
+                  Confirme o código do país e digite seu número de telefone.
+              </p>
+              
+              <div className="bg-[#1C1C1E] rounded-xl overflow-hidden mb-6">
+                  <div className="flex items-center p-3 border-b border-[#2C2C2E]">
+                      <span className="text-white w-20 pl-2">Brasil</span>
+                      <span className="text-[#8E8E93] ml-auto">+55</span>
+                  </div>
+                  <div className="flex items-center p-3">
+                      <input 
+                         type="tel" 
+                         placeholder="Seu número de telefone"
+                         className="bg-transparent w-full text-white outline-none pl-2 text-[17px]" 
+                      />
+                  </div>
+              </div>
+              
+              <button className="bg-[#FF453A] text-white w-full py-3.5 rounded-xl font-bold text-[17px]">
+                  Apagar minha conta
+              </button>
+          </div>
+      </div>
+  </SettingsSubScreen>
+);
+
+const AccountView = ({ onBack }: any) => {
+  const [subScreen, setSubScreen] = useState<string | null>(null);
+
+  if (subScreen === 'security') return <SecurityNotificationsView onBack={() => setSubScreen(null)} />;
+  if (subScreen === 'passkeys') return <PasskeysView onBack={() => setSubScreen(null)} />;
+  if (subScreen === 'twoStep') return <TwoStepVerificationView onBack={() => setSubScreen(null)} />;
+
+  return (
+  <SettingsSubScreen title="Conta" onBack={onBack}>
+     <div className="mt-6 px-4 space-y-8">
+        <div className="bg-[#1C1C1E] rounded-xl overflow-hidden">
+           <SettingItem 
+                onClick={() => setSubScreen('security')}
+                icon={<Shield size={24} className="text-[#8E8E93]" />} 
+                label="Notificações de segurança" 
+                isLast={false} 
+            />
+           <SettingItem 
+                onClick={() => setSubScreen('passkeys')}
+                icon={<Key size={24} className="text-[#8E8E93]" />} 
+                label="Chaves de acesso" 
+                isLast={false} 
+            />
+           <SettingItem 
+                onClick={() => setSubScreen('twoStep')}
+                icon={<div className="text-[14px] font-bold text-[#8E8E93] border-2 border-[#8E8E93] rounded-sm w-5 h-5 flex items-center justify-center pt-1 leading-none">•••</div>} 
+                label="Confirmação em duas etapas" 
+                isLast={true} 
+            />
+        </div>
+     </div>
+  </SettingsSubScreen>
+  );
+};
+
+const PrivacyView = ({ onBack }: any) => {
+  const [readReceipts, setReadReceipts] = useState(true);
+  
+  return (
+  <SettingsSubScreen title="Privacidade" onBack={onBack}>
+     <div className="mt-6 px-4 space-y-6">
+        <div>
+            <h3 className="text-[#8E8E93] text-[13px] uppercase mb-2 pl-4">Quem pode ver meus dados</h3>
+            <div className="bg-[#1C1C1E] rounded-xl overflow-hidden">
+               <SettingItem label="Visto por último e online" value="Ninguém" isLast={false} />
+               <SettingItem label="Foto do perfil" value="Meus contatos" isLast={false} />
+               <SettingItem label="Recado" value="Todos" isLast={false} />
+               <SettingItem label="Status" value="Meus contatos" isLast={false} />
+               <div className="flex items-center pl-4 py-2.5 pr-4 border-b border-[#2C2C2E] bg-[#1C1C1E]">
+                   <span className="text-[17px] text-white flex-1">Confirmações de leitura</span>
+                   <Switch checked={readReceipts} onChange={setReadReceipts} />
+               </div>
+               <div className="p-4 text-[13px] text-[#8E8E93]">
+                  Se esta opção estiver desativada, você não poderá ver nem enviar confirmações de leitura. As confirmações de leitura são sempre enviadas nas conversas em grupo.
+               </div>
+            </div>
+        </div>
+
+        <div>
+           <h3 className="text-[#8E8E93] text-[13px] uppercase mb-2 pl-4">Mensagens temporárias</h3>
+           <div className="bg-[#1C1C1E] rounded-xl overflow-hidden">
+               <SettingItem label="Duração padrão" value="Desativada" isLast={true} />
+           </div>
+        </div>
+     </div>
+  </SettingsSubScreen>
+  );
+};
+
+const ChatsView = ({ onBack }: any) => {
+  const [keepArchived, setKeepArchived] = useState(true);
+
+  return (
+  <SettingsSubScreen title="Conversas" onBack={onBack}>
+     <div className="mt-6 px-4 space-y-8">
+        <div className="bg-[#1C1C1E] rounded-xl overflow-hidden">
+           <SettingItem icon={<ImageIcon size={24} className="text-[#8E8E93]" />} label="Papel de Parede" isLast={false} />
+        </div>
+
+        <div className="bg-[#1C1C1E] rounded-xl overflow-hidden">
+            <h3 className="text-[#8E8E93] text-[13px] uppercase p-4 pb-2">Conversas arquivadas</h3>
+            <div className="flex items-center pl-4 py-2.5 pr-4 border-b border-[#2C2C2E] bg-[#1C1C1E]">
+                <div className="mr-3 min-w-[28px]"><Archive size={24} className="text-[#8E8E93]" /></div>
+                <div className="flex-1 flex items-center justify-between">
+                   <span className="text-[17px] text-white">Manter conversas arquivadas</span>
+                   <Switch checked={keepArchived} onChange={setKeepArchived} />
+                </div>
+           </div>
+           <div className="p-4 pt-2 text-[13px] text-[#8E8E93]">
+               As conversas arquivadas permanecerão arquivadas quando você receber uma nova mensagem.
+           </div>
+        </div>
+
+        <div className="bg-[#1C1C1E] rounded-xl overflow-hidden">
+           <SettingItem label="Limpar todas as conversas" textColor="text-[#FF453A]" isLast={false} />
+        </div>
+     </div>
+  </SettingsSubScreen>
+  );
+};
+
+const NotificationsView = ({ onBack }: any) => {
+  const [showNotif, setShowNotif] = useState(true);
+  
+  return (
+  <SettingsSubScreen title="Notificações" onBack={onBack}>
+     <div className="mt-6 px-4 space-y-6">
+        <div>
+           <h3 className="text-[#8E8E93] text-[13px] uppercase mb-2 pl-4">Notificações de mensagens</h3>
+           <div className="bg-[#1C1C1E] rounded-xl overflow-hidden">
+              <div className="flex items-center pl-4 py-2.5 pr-4 border-b border-[#2C2C2E] bg-[#1C1C1E]">
+                   <span className="text-[17px] text-white flex-1">Mostrar notificações</span>
+                   <Switch checked={showNotif} onChange={setShowNotif} />
+              </div>
+              <SettingItem label="Som" value="Nota" isLast={false} />
+           </div>
+        </div>
+        
+        <div>
+           <h3 className="text-[#8E8E93] text-[13px] uppercase mb-2 pl-4">Notificações de grupo</h3>
+           <div className="bg-[#1C1C1E] rounded-xl overflow-hidden">
+              <div className="flex items-center pl-4 py-2.5 pr-4 border-b border-[#2C2C2E] bg-[#1C1C1E]">
+                   <span className="text-[17px] text-white flex-1">Mostrar notificações</span>
+                   <Switch checked={showNotif} onChange={setShowNotif} />
+              </div>
+              <SettingItem label="Som" value="Bambu" isLast={false} />
+           </div>
+        </div>
+     </div>
+  </SettingsSubScreen>
+  );
+};
+
+const StorageDataView = ({ onBack }: any) => {
+   const [useLessData, setUseLessData] = useState(false);
+   
+   return (
+    <SettingsSubScreen title="Armazenamento e Dados" onBack={onBack}>
+       <div className="mt-6 px-4 space-y-6">
+          <div className="bg-[#1C1C1E] rounded-xl overflow-hidden">
+             <SettingItem icon={<Database size={24} className="text-[#8E8E93]" />} label="Gerenciar armazenamento" value="2.4 GB" isLast={false} />
+             <SettingItem icon={<Wifi size={24} className="text-[#8E8E93]" />} label="Uso de rede" value="15.2 GB" isLast={true} />
+          </div>
+
+          <div className="bg-[#1C1C1E] rounded-xl overflow-hidden">
+             <div className="flex items-center pl-4 py-2.5 pr-4 bg-[#1C1C1E]">
+                 <div className="mr-3 min-w-[28px]"><Phone size={24} className="text-[#8E8E93]" /></div>
+                 <div className="flex-1 flex items-center justify-between">
+                    <span className="text-[17px] text-white">Usar menos dados em chamadas</span>
+                    <Switch checked={useLessData} onChange={setUseLessData} />
+                 </div>
+             </div>
+             <SettingItem icon={<Globe size={24} className="text-[#8E8E93]" />} label="Servidor proxy" value="Desativado" isLast={true} />
+          </div>
+       </div>
+    </SettingsSubScreen>
+   );
+};
+
+const SettingsView = () => {
+  const [activeScreen, setActiveScreen] = useState('main');
+
+  if (activeScreen === 'starred') return <StarredMessagesView onBack={() => setActiveScreen('main')} />;
+  if (activeScreen === 'devices') return <LinkedDevicesView onBack={() => setActiveScreen('main')} />;
+  if (activeScreen === 'account') return <AccountView onBack={() => setActiveScreen('main')} />;
+  if (activeScreen === 'privacy') return <PrivacyView onBack={() => setActiveScreen('main')} />;
+  if (activeScreen === 'chats') return <ChatsView onBack={() => setActiveScreen('main')} />;
+  if (activeScreen === 'notifications') return <NotificationsView onBack={() => setActiveScreen('main')} />;
+  if (activeScreen === 'storage') return <StorageDataView onBack={() => setActiveScreen('main')} />;
+
+  return (
+    <IOSScreenWrapper
+      title="Configurações"
+      headerContent={
+        <div className="pb-2">
+            <h1 className="text-[34px] font-bold tracking-tight mb-2 text-white">Configurações</h1>
+        </div>
+      }
+    >
+      <div className="bg-[#1C1C1E] rounded-xl mx-4 mb-8 flex items-center p-4 gap-4 cursor-pointer active:bg-[#2C2C2E] mt-4">
+         <div className="w-[60px] h-[60px] rounded-full overflow-hidden bg-[#2C2C2E]">
+             <ImageWithFallback src={MY_AVATAR} alt="Me" className="w-full h-full object-cover" />
+         </div>
+         <div className="flex-1">
+            <h2 className="text-[20px] font-normal text-white">Usuário Demo</h2>
+            <p className="text-[15px] text-[#8E8E93]">Disponível</p>
+         </div>
+         <div className="w-10 h-10 bg-[#2C2C2E] rounded-full flex items-center justify-center">
+            <QrCode size={20} className="text-[#0A84FF]" />
+         </div>
+      </div>
+
+      <div className="space-y-8 px-4">
+         <div className="bg-[#1C1C1E] rounded-xl overflow-hidden">
+            <SettingItem 
+                onClick={() => setActiveScreen('starred')}
+                icon={<div className="w-7 h-7 rounded bg-[#0A84FF] flex items-center justify-center"><div className="text-white text-xs font-bold">★</div></div>} 
+                label="Mensagens Favoritas" 
+                isLast={false} 
+            />
+            <SettingItem 
+                onClick={() => setActiveScreen('devices')}
+                icon={<div className="w-7 h-7 rounded bg-[#30D158] flex items-center justify-center"><Laptop size={16} className="text-white" /></div>} 
+                label="Aparelhos Conectados" 
+                isLast={true} 
+            />
+         </div>
+
+         <div className="bg-[#1C1C1E] rounded-xl overflow-hidden">
+            <SettingItem 
+                onClick={() => setActiveScreen('account')}
+                icon={<div className="w-7 h-7 rounded bg-[#0A84FF] flex items-center justify-center"><Key size={16} className="text-white" /></div>} 
+                label="Conta" 
+                isLast={false} 
+            />
+            <SettingItem 
+                onClick={() => setActiveScreen('privacy')}
+                icon={<div className="w-7 h-7 rounded bg-[#64D2FF] flex items-center justify-center"><Lock size={16} className="text-white" /></div>} 
+                label="Privacidade" 
+                isLast={false} 
+            />
+            <SettingItem 
+                onClick={() => setActiveScreen('chats')}
+                icon={<div className="w-7 h-7 rounded bg-[#30D158] flex items-center justify-center"><MessageCircle size={16} className="text-white" /></div>} 
+                label="Conversas" 
+                isLast={false} 
+            />
+            <SettingItem 
+                onClick={() => setActiveScreen('notifications')}
+                icon={<div className="w-7 h-7 rounded bg-[#FF375F] flex items-center justify-center"><Bell size={16} className="text-white" /></div>} 
+                label="Notificações" 
+                isLast={false} 
+            />
+            <SettingItem 
+                onClick={() => setActiveScreen('storage')}
+                icon={<div className="w-7 h-7 rounded bg-[#30D158] flex items-center justify-center"><Database size={16} className="text-white" /></div>} 
+                label="Armazenamento e Dados" 
+                isLast={true} 
+            />
+         </div>
+         
+         <div className="bg-[#1C1C1E] rounded-xl overflow-hidden">
+            <SettingItem icon={<div className="w-7 h-7 rounded bg-[#0A84FF] flex items-center justify-center"><HelpCircle size={16} className="text-white" /></div>} label="Ajuda" isLast={false} />
+            <SettingItem icon={<div className="w-7 h-7 rounded bg-[#FF375F] flex items-center justify-center"><Heart size={16} className="text-white" /></div>} label="Convidar Amigos" isLast={true} />
+         </div>
+      </div>
+    </IOSScreenWrapper>
+  );
+};
+
+const SettingItem = ({ icon, label, isLast, value, textColor = "text-white", onClick }: any) => (
+  <div onClick={onClick} className="flex items-center pl-4 cursor-pointer active:bg-[#2C2C2E]">
+     <div className="mr-3 min-w-[28px]">
+        {icon}
+     </div>
+     <div className={`flex-1 flex items-center justify-between py-2.5 pr-4 ${!isLast ? 'border-b border-[#2C2C2E]' : ''}`}>
+        <span className={`text-[17px] ${textColor}`}>{label}</span>
+        <div className="flex items-center gap-2">
+            {value && <span className="text-[17px] text-[#8E8E93]">{value}</span>}
+            <ChevronRight size={16} className="text-[#8E8E93] opacity-60" />
+        </div>
+     </div>
+  </div>
+);
+
+const ContactInfoView = ({ user, onClose }: { user: any, onClose: () => void }) => {
+    const [isHeaderBlurred, setIsHeaderBlurred] = useState(false);
+    const scrollRef = useRef<HTMLDivElement>(null);
+
+    const handleScroll = () => {
+        if (scrollRef.current) {
+            const scrollTop = scrollRef.current.scrollTop;
+            // Quando rolar o suficiente para a foto "tocar" o cabeçalho
+            setIsHeaderBlurred(scrollTop > 50);
+        }
+    };
+
+    return (
+        <div className="flex flex-col h-full bg-black relative z-50">
+            {/* Header */}
+            <div 
+                className={`absolute top-0 w-full z-20 px-4 pt-10 sm:pt-4 pb-3 flex justify-between items-center transition-all duration-300 ${
+                    isHeaderBlurred 
+                        ? "bg-[#161616]/80 backdrop-blur-xl border-b border-[#2C2C2E]" 
+                        : "bg-black"
+                }`}
+            >
+                <button 
+                    onClick={onClose}
+                    className="flex items-center text-[#0A84FF] gap-1 -ml-2"
+                >
+                    <ChevronLeft size={28} strokeWidth={2} />
+                    <span className="text-[17px] font-normal leading-none -ml-1">Voltar</span>
+                </button>
+                <span className={`font-semibold text-[17px] text-white transition-opacity duration-300 ${isHeaderBlurred ? "opacity-100" : "opacity-0"}`}>
+                    Dados do contato
+                </span>
+                <button className="text-[#0A84FF] text-[17px] font-normal">Editar</button>
+            </div>
+
+            {/* Scroll Content */}
+            <div 
+                ref={scrollRef}
+                onScroll={handleScroll}
+                className="flex-1 overflow-y-auto pt-[80px] pb-10 bg-black [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+            >
+                {/* Profile Header */}
+                <div className="flex flex-col items-center pt-4 pb-6">
+                    <div className="w-28 h-28 rounded-full overflow-hidden bg-[#2C2C2E] mb-3">
+                        <ImageWithFallback src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                    </div>
+                    <h2 className="text-[24px] font-bold text-white mb-1">{user.name}</h2>
+                    <p className="text-[17px] text-[#8E8E93]">{user.phoneNumber}</p>
+                    
+                    {/* Action Buttons */}
+                    <div className="flex items-center justify-center gap-6 mt-6 w-full px-10">
+                        <div className="flex flex-col items-center gap-1 cursor-pointer">
+                            <div className="w-14 h-14 rounded-xl bg-[#1C1C1E] flex items-center justify-center text-[#0A84FF]">
+                                <MessageCircle size={24} fill="currentColor" />
+                            </div>
+                            <span className="text-[11px] text-[#0A84FF] font-medium">Mensagem</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-1 cursor-pointer">
+                            <div className="w-14 h-14 rounded-xl bg-[#1C1C1E] flex items-center justify-center text-[#0A84FF]">
+                                <Video size={24} fill="currentColor" />
+                            </div>
+                            <span className="text-[11px] text-[#0A84FF] font-medium">Vídeo</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-1 cursor-pointer">
+                            <div className="w-14 h-14 rounded-xl bg-[#1C1C1E] flex items-center justify-center text-[#0A84FF]">
+                                <Phone size={24} fill="currentColor" />
+                            </div>
+                            <span className="text-[11px] text-[#0A84FF] font-medium">Ligar</span>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                {/* Media & Links */}
+                <div className="px-4 mb-8 space-y-8">
+                    <div className="bg-[#1C1C1E] rounded-xl overflow-hidden">
+                        <SettingItem 
+                            icon={<div className="w-7 h-7 rounded bg-[#0A84FF] flex items-center justify-center"><ImageIcon size={16} className="text-white" /></div>} 
+                            label="Mídia, Links e Docs" 
+                            isLast={false} 
+                            value="12"
+                        />
+                        <SettingItem 
+                            icon={<div className="w-7 h-7 rounded bg-[#FFcc00] flex items-center justify-center"><Star size={16} fill="white" className="text-white" /></div>} 
+                            label="Mensagens Favoritas" 
+                            isLast={false} 
+                            value="Nenhuma"
+                        />
+                        <SettingItem 
+                            icon={<div className="w-7 h-7 rounded bg-[#FF9500] flex items-center justify-center"><Search size={16} className="text-white" /></div>} 
+                            label="Pesquisar" 
+                            isLast={true} 
+                        />
+                    </div>
+
+                    <div className="bg-[#1C1C1E] rounded-xl overflow-hidden">
+                        <SettingItem 
+                            icon={<div className="w-7 h-7 rounded bg-[#30D158] flex items-center justify-center"><Volume2 size={16} fill="currentColor" className="text-white" /></div>} 
+                            label="Silenciar" 
+                            isLast={false} 
+                            value="Não"
+                        />
+                         <SettingItem 
+                            icon={<div className="w-7 h-7 rounded bg-[#E066FF] flex items-center justify-center"><ImageIcon size={14} className="text-white" /></div>} 
+                            label="Papel de Parede e Som" 
+                            isLast={false} 
+                        />
+                        <SettingItem 
+                            icon={<div className="w-7 h-7 rounded bg-[#FFcc00] flex items-center justify-center"><Download size={16} className="text-white" /></div>} 
+                            label="Salvar no Rolo da Câmera" 
+                            isLast={true} 
+                            value="Padrão"
+                        />
+                    </div>
+
+                    <div className="bg-[#1C1C1E] rounded-xl overflow-hidden">
+                         <SettingItem 
+                            icon={<div className="w-7 h-7 rounded bg-[#0A84FF] flex items-center justify-center"><Timer size={16} className="text-white" /></div>} 
+                            label="Mensagens Temporárias" 
+                            isLast={false} 
+                            value="Desativadas"
+                        />
+                        <SettingItem 
+                            icon={<div className="w-7 h-7 rounded bg-[#0A84FF] flex items-center justify-center"><Lock size={16} fill="currentColor" className="text-white" /></div>} 
+                            label="Criptografia" 
+                            isLast={true} 
+                        />
+                    </div>
+
+                    <div className="bg-[#1C1C1E] rounded-xl overflow-hidden">
+                        <SettingItem 
+                            icon={<div className="w-7 h-7 rounded bg-transparent flex items-center justify-center"></div>} 
+                            label={`Bloquear ${user.name}`} 
+                            isLast={false} 
+                            textColor="text-[#FF453A]"
+                        />
+                        <SettingItem 
+                            icon={<div className="w-7 h-7 rounded bg-transparent flex items-center justify-center"></div>} 
+                            label={`Denunciar ${user.name}`} 
+                            isLast={true} 
+                            textColor="text-[#FF453A]"
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const CallsView = () => {
+  const [segment, setSegment] = useState('all');
+
+  return (
+    <IOSScreenWrapper
+       title="Ligações"
+       leftAction={<button className="text-[17px] text-[#0A84FF]">Editar</button>}
+       rightAction={
+          <button className="text-[#0A84FF] relative">
+            <Phone size={22} strokeWidth={1.5} />
+            <Plus size={14} strokeWidth={3} className="absolute -mt-5 ml-3" />
+          </button>
+       }
+       headerContent={
+         <div className="pb-2">
+            <h1 className="text-[34px] font-bold tracking-tight mb-3 text-white">Ligações</h1>
+            <div className="flex justify-center mb-2">
+              <div className="bg-[#1C1C1E] p-0.5 rounded-lg flex w-full max-w-[200px]">
+                  <button 
+                    onClick={() => setSegment('all')}
+                    className={`flex-1 text-[13px] font-semibold py-1 rounded-[6px] transition-all ${segment === 'all' ? 'bg-[#636366] text-white shadow-sm' : 'text-white'}`}
+                  >
+                    Todas
+                  </button>
+                  <button 
+                    onClick={() => setSegment('missed')}
+                    className={`flex-1 text-[13px] font-semibold py-1 rounded-[6px] transition-all ${segment === 'missed' ? 'bg-[#636366] text-white shadow-sm' : 'text-white'}`}
+                  >
+                    Perdidas
+                  </button>
+              </div>
+            </div>
+         </div>
+       }
+    >
+       <div className="mt-2">
+          {CALL_HISTORY.filter(c => segment === 'all' || (segment === 'missed' && c.status === 'missed')).map((call, index) => {
+             const user = INITIAL_USERS.find(u => u.id === call.userId);
+             return (
+               <div key={call.id} className="flex items-center pl-4 active:bg-[#1C1C1E]">
+                 <div className="py-2 pr-3">
+                    <div className="w-[40px] h-[40px] rounded-full overflow-hidden bg-[#2C2C2E]">
+                       <ImageWithFallback src={user?.avatar || ""} alt="User" className="w-full h-full object-cover" />
+                    </div>
+                 </div>
+                 <div className={`flex-1 flex items-center justify-between py-2 pr-4 ${index !== CALL_HISTORY.length -1 ? 'border-b border-[#2C2C2E]' : ''}`}>
+                    <div>
+                       <h3 className={`text-[17px] font-semibold ${call.status === 'missed' ? 'text-[#FF453A]' : 'text-white'}`}>
+                          {user?.name || "Desconhecido"}
+                       </h3>
+                       <div className="flex items-center gap-1 text-[#8E8E93] text-[14px]">
+                          <Phone size={12} fill="currentColor" className="text-[#8E8E93]" />
+                          <span>{call.type === 'incoming' ? 'recebida' : 'efetuada'}</span>
+                          <span>{call.date}</span>
+                       </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                       <span className="text-[#8E8E93] text-[15px] mr-1">{call.time}</span>
+                       <button className="text-[#0A84FF]">
+                          <Info size={22} strokeWidth={1.5} />
+                       </button>
+                    </div>
+                 </div>
+               </div>
+             );
+          })}
+       </div>
+    </IOSScreenWrapper>
+  );
+};
+
+const StatusView = () => {
+  return (
+    <IOSScreenWrapper
+       title="Status"
+       leftAction={<button className="text-[17px] text-[#0A84FF]">Privacidade</button>}
+       headerContent={
+         <div className="pb-2">
+            <h1 className="text-[34px] font-bold tracking-tight mb-3 text-white">Status</h1>
+            <div className="bg-[#1C1C1E] rounded-xl flex items-center px-2 py-1.5 mb-2">
+              <Search size={18} className="text-[#8E8E93] mx-1" />
+              <input 
+                type="text" 
+                placeholder="Pesquisar"
+                className="bg-transparent outline-none flex-1 ml-1 text-[17px] placeholder-[#8E8E93] text-white"
+              />
+            </div>
+         </div>
+       }
+    >
+       <div className="flex-1">
+          <div className="mt-6 mb-2 px-4 text-xs font-semibold text-[#8E8E93] uppercase">Meu Status</div>
+          <div className="bg-[#1C1C1E] flex items-center p-4 gap-4 active:bg-[#2C2C2E]">
+              <div className="relative w-[58px] h-[58px]">
+                 <div className="w-full h-full rounded-full overflow-hidden bg-[#2C2C2E]">
+                    <ImageWithFallback src={MY_AVATAR} alt="Me" className="w-full h-full object-cover" />
+                 </div>
+                 <div className="absolute bottom-0 right-0 bg-[#0A84FF] text-white w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#1C1C1E]">
+                    <Plus size={14} strokeWidth={4} />
+                 </div>
+              </div>
+              <div className="flex-1">
+                 <h3 className="text-[17px] font-semibold text-white">Adicionar ao meu status</h3>
+              </div>
+              <div className="flex gap-4 text-[#0A84FF] bg-[#2C2C2E] p-2 rounded-full">
+                 <Camera size={20} />
+              </div>
+              <div className="flex gap-4 text-[#0A84FF] bg-[#2C2C2E] p-2 rounded-full">
+                 <SquarePen size={20} />
+              </div>
+          </div>
+
+          <div className="mt-8 mb-2 px-4 text-xs font-semibold text-[#8E8E93] uppercase">Atualizações Recentes</div>
+          <div className="bg-[#1C1C1E]">
+             {INITIAL_USERS.filter(u => u.hasStatus).map((user, idx, arr) => (
+                <div key={user.id} className="flex items-center px-4 py-2 cursor-pointer active:bg-[#2C2C2E]">
+                   <div className="mr-3 relative">
+                      <div className="w-[58px] h-[58px] rounded-full p-[2px] border-[2px] border-[#0A84FF]">
+                         <div className="w-full h-full rounded-full overflow-hidden bg-[#2C2C2E] border-[2px] border-black">
+                           <ImageWithFallback src={user.statusImage} alt={user.name} className="w-full h-full object-cover" />
+                         </div>
+                      </div>
+                   </div>
+                   <div className={`flex-1 flex flex-col justify-center py-2.5 ${idx !== arr.length - 1 ? 'border-b border-[#2C2C2E]' : ''}`}>
+                      <h3 className="text-[17px] font-semibold text-white">{user.name}</h3>
+                      <p className="text-[15px] text-[#8E8E93]">{user.statusTime}</p>
+                   </div>
+                </div>
+             ))}
+          </div>
+       </div>
+    </IOSScreenWrapper>
+  );
+};
+
+// --- MAIN COMPONENT ---
+export default function App() {
+  const [activeTab, setActiveTab] = useState('chats');
+  const [selectedChat, setSelectedChat] = useState<number | null>(null);
+  const [showContactInfo, setShowContactInfo] = useState(false);
+  const [isArchivedView, setIsArchivedView] = useState(false);
+  const [users, setUsers] = useState(INITIAL_USERS);
+  const [inputText, setInputText] = useState('');
+  
+  const [chatHistory, setChatHistory] = useState<{ [key: number]: { text: string, isMe: boolean, time: string }[] }>({
+    1: [
+      { text: "Oi Ana!", isMe: true, time: "10:28" },
+      { text: "Oi! Tudo bem com você?", isMe: false, time: "10:30" }
+    ],
+    2: [
+      { text: "Preciso daquele relatório.", isMe: true, time: "14:00" },
+      { text: "Te envio o documento mais tarde.", isMe: false, time: "14:15" }
+    ]
+  });
+
+  const handleDeleteChat = (id: number) => {
+    if (confirm("Tem certeza que deseja apagar esta conversa?")) {
+       setUsers(prev => prev.filter(u => u.id !== id));
+    }
+  };
+
+  const handleArchiveChat = (id: number) => {
+     setUsers(prev => prev.map(u => u.id === id ? { ...u, archived: !u.archived } : u));
+  };
+
+  const handleSendMessage = () => {
+    if (!inputText.trim() || selectedChat === null) return;
+    
+    const newMessage = {
+      text: inputText,
+      isMe: true,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    setChatHistory(prev => ({
+      ...prev,
+      [selectedChat]: [...(prev[selectedChat] || []), newMessage]
+    }));
+    
+    setUsers(prev => {
+       const userIndex = prev.findIndex(u => u.id === selectedChat);
+       if (userIndex === -1) return prev;
+       const updatedUser = { ...prev[userIndex], lastMessage: inputText, time: "Agora" };
+       const newUsers = [...prev];
+       newUsers.splice(userIndex, 1);
+       return [updatedUser, ...newUsers];
+    });
+
+    setInputText('');
+  };
+
+  const getChatMessages = (id: number) => {
+    return chatHistory[id] || [
+      { text: "Olá!", isMe: false, time: "09:00" }
+    ];
+  };
+
+  if (selectedChat !== null) {
+    const user = users.find(u => u.id === selectedChat);
+    if (!user) {
+        setSelectedChat(null);
+        return null;
+    }
+
+    if (showContactInfo) {
+        return <ContactInfoView user={user} onClose={() => setShowContactInfo(false)} />;
+    }
+
+    return (
+      <div className="flex flex-col h-screen w-full bg-[#0B141A] overflow-hidden">
+        <div className="flex items-center justify-between px-2 py-2 bg-[#161616]/95 border-b border-[#2C2C2E] backdrop-blur-md pt-10 sm:pt-2">
+          <div className="flex items-center gap-1 cursor-pointer text-[#0A84FF]" onClick={() => setSelectedChat(null)}>
+            <ChevronLeft size={30} strokeWidth={2.5} />
+            <span className="text-lg font-normal leading-none -ml-1">
+              {users.reduce((acc, u) => acc + (u.unread > 0 ? 1 : 0), 0) || "Conversas"}
+            </span>
+          </div>
+          
+          <div 
+             className="flex flex-col items-start justify-center flex-1 ml-4 mr-2 cursor-pointer"
+             onClick={() => setShowContactInfo(true)}
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-full overflow-hidden">
+                <ImageWithFallback src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+              </div>
+              <div className="flex flex-col items-start">
+                <span className="text-sm font-semibold text-white leading-tight">{user.name}</span>
+                <span className="text-xs text-[#8E8E93] leading-tight">{user.online ? 'Online' : 'Visto por último hoje às 10:30'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 pr-2 text-[#0A84FF]">
+            <Video size={24} strokeWidth={1.5} />
+            <Phone size={24} strokeWidth={1.5} />
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 bg-[#0B141A] relative flex flex-col gap-2">
+           <div className="absolute inset-0 opacity-10 pointer-events-none invert" 
+                style={{ 
+                  backgroundImage: "url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')",
+                  backgroundSize: "400px"
+                }}>
+           </div>
+
+           {getChatMessages(user.id).map((msg, index) => (
+             <div key={index} className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'} z-10 relative`}>
+                <div className={`max-w-[75%] px-3 py-1.5 rounded-2xl shadow-sm text-[15px] leading-5 relative group
+                  ${msg.isMe ? 'bg-[#005C4B] text-white rounded-tr-none' : 'bg-[#1F2C34] text-white rounded-tl-none'}`}>
+                  <span>{msg.text}</span>
+                  <div className="flex items-center justify-end gap-1 mt-0.5 opacity-60">
+                    <span className="text-[10px] uppercase text-[#FFFFFF]">{msg.time}</span>
+                    {msg.isMe && <CheckCheck size={14} className="text-[#34B7F1]" />}
+                  </div>
+                </div>
+             </div>
+           ))}
+        </div>
+
+        <div className="bg-[#161616] px-2 py-2 flex items-end gap-2 border-t border-[#2C2C2E] pb-6 sm:pb-2">
+          <button className="text-[#0A84FF] p-2 hover:bg-[#2C2C2E] rounded-full transition-colors">
+            <Plus size={24} />
+          </button>
+          
+          <div className="flex-1 bg-[#2C2C2E] border border-transparent rounded-2xl flex items-center px-3 py-1.5 min-h-[35px]">
+             <input 
+               type="text" 
+               value={inputText}
+               onChange={(e) => setInputText(e.target.value)}
+               onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+               placeholder="Mensagem"
+               className="flex-1 bg-transparent outline-none text-[16px] placeholder-[#8E8E93] text-white"
+             />
+
+          </div>
+
+          {inputText ? (
+             <button onClick={handleSendMessage} className="text-[#0A84FF] font-semibold p-2">Enviar</button>
+          ) : (
+            <>
+              <button className="text-[#0A84FF] p-2 hover:bg-[#2C2C2E] rounded-full transition-colors">
+                <Camera size={24} strokeWidth={1.5} />
+              </button>
+              <button className="text-[#0A84FF] p-2 hover:bg-[#2C2C2E] rounded-full transition-colors">
+                <Mic size={24} strokeWidth={1.5} />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // --- TAB NAVIGATION (HOME) ---
+  return (
+    <div className="flex flex-col h-screen w-full bg-black overflow-hidden">
+       <div className="flex-1 relative overflow-hidden">
+          {activeTab === 'status' && <StatusView />}
+          {activeTab === 'calls' && <CallsView />}
+          {activeTab === 'communities' && (
+            <IOSScreenWrapper title="Comunidades">
+              <div className="flex flex-col items-center justify-center h-full text-center px-6">
+                 <div className="w-[150px] h-[100px] bg-[#1C1C1E] rounded-2xl mb-6 flex items-center justify-center">
+                    <Users size={48} className="text-[#8E8E93]" />
+                 </div>
+                 <h2 className="text-[24px] font-bold text-white mb-2">Apresentando a Comunidade</h2>
+                 <p className="text-[16px] text-[#8E8E93] mb-8">
+                    Organize e reúna grupos relacionados com facilidade.
+                 </p>
+                 <button className="bg-[#0A84FF] text-white font-semibold w-full py-3 rounded-xl mb-4">
+                    Inicie sua comunidade
+                 </button>
+              </div>
+            </IOSScreenWrapper>
+          )}
+          {activeTab === 'chats' && (
+             <IOSScreenWrapper 
+               title={isArchivedView ? "Arquivadas" : "Conversas"}
+               showDynamicHeader={true}
+               leftAction={
+                  isArchivedView 
+                   ? <button className="text-[#0A84FF] flex items-center gap-1" onClick={() => setIsArchivedView(false)}><ChevronLeft size={22} />Voltar</button>
+                   : <button className="text-[#0A84FF] text-[17px]">Editar</button>
+               }
+               rightAction={
+                  !isArchivedView && (
+                    <div className="flex gap-4 text-[#0A84FF]">
+                       <SquarePen size={22} strokeWidth={1.5} />
+                    </div>
+                  )
+               }
+               headerContent={
+                 !isArchivedView && (
+                    <div className="pb-2">
+                       <h1 className="text-[34px] font-bold tracking-tight mb-3 text-white">Conversas</h1>
+                       <div className="flex justify-between items-center mb-2 px-2">
+                          <button 
+                            className="text-[#0A84FF] font-medium text-[17px]"
+                            onClick={() => setIsArchivedView(true)}
+                          >
+                            Arquivadas
+                          </button>
+                          <button className="text-[#0A84FF] font-medium text-[17px]">Novo Grupo</button>
+                       </div>
+                       {/* Search Bar */}
+                       <div className="bg-[#1C1C1E] rounded-xl flex items-center px-2 py-1.5 mt-2">
+                          <Search size={18} className="text-[#8E8E93] mx-1" />
+                          <input 
+                             type="text" 
+                             placeholder="Pesquisar"
+                             className="bg-transparent outline-none flex-1 ml-1 text-[17px] placeholder-[#8E8E93] text-white"
+                          />
+                       </div>
+                    </div>
+                 )
+               }
+             >
+                <div className="bg-black">
+                   {(isArchivedView ? users.filter(u => u.archived) : users.filter(u => !u.archived)).map((user, index, arr) => (
+                      <SwipeableChatRow 
+                        key={user.id} 
+                        user={user} 
+                        index={index} 
+                        isLast={index === arr.length - 1}
+                        isArchivedView={isArchivedView}
+                        onClick={() => setSelectedChat(user.id)}
+                        onArchive={handleArchiveChat}
+                        onDelete={handleDeleteChat}
+                      />
+                   ))}
+                   {isArchivedView && users.filter(u => u.archived).length === 0 && (
+                      <div className="text-center py-10 text-[#8E8E93]">
+                         Nenhuma conversa arquivada
+                      </div>
+                   )}
+                </div>
+             </IOSScreenWrapper>
+          )}
+          {activeTab === 'settings' && <SettingsView />}
+       </div>
+
+       {/* Bottom Navigation */}
+       <div className="bg-[#161616]/95 backdrop-blur-md border-t border-[#2C2C2E] pb-6 sm:pb-1 pt-1 px-2 flex justify-between items-center z-50">
+          <button onClick={() => setActiveTab('status')} className={`flex-1 flex flex-col items-center gap-1 py-1 ${activeTab === 'status' ? 'text-[#0A84FF]' : 'text-[#8E8E93]'}`}>
+             <CircleDashed size={24} strokeWidth={2} />
+             <span className="text-[10px] font-medium">Status</span>
+          </button>
+          <button onClick={() => setActiveTab('calls')} className={`flex-1 flex flex-col items-center gap-1 py-1 ${activeTab === 'calls' ? 'text-[#0A84FF]' : 'text-[#8E8E93]'}`}>
+             <Phone size={24} strokeWidth={2} />
+             <span className="text-[10px] font-medium">Ligações</span>
+          </button>
+          <button onClick={() => setActiveTab('communities')} className={`flex-1 flex flex-col items-center gap-1 py-1 ${activeTab === 'communities' ? 'text-[#0A84FF]' : 'text-[#8E8E93]'}`}>
+             <Users size={24} strokeWidth={2} />
+             <span className="text-[10px] font-medium">Comunidades</span>
+          </button>
+          <button onClick={() => setActiveTab('chats')} className={`flex-1 flex flex-col items-center gap-1 py-1 ${activeTab === 'chats' ? 'text-[#0A84FF]' : 'text-[#8E8E93]'}`}>
+             <MessageCircle size={24} strokeWidth={2} fill={activeTab === 'chats' ? "currentColor" : "none"} />
+             <span className="text-[10px] font-medium">Conversas</span>
+             {users.filter(u => u.unread > 0).length > 0 && (
+                <span className="absolute top-2 ml-4 bg-[#FF3B30] text-white text-[10px] font-bold px-1.5 rounded-full min-w-[18px] flex justify-center">
+                   {users.reduce((acc, u) => acc + u.unread, 0)}
+                </span>
+             )}
+          </button>
+          <button onClick={() => setActiveTab('settings')} className={`flex-1 flex flex-col items-center gap-1 py-1 ${activeTab === 'settings' ? 'text-[#0A84FF]' : 'text-[#8E8E93]'}`}>
+             <Settings size={24} strokeWidth={2} />
+             <span className="text-[10px] font-medium">Configurações</span>
+          </button>
+       </div>
+    </div>
+  );
+}
+
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --font-size: 16px;
+  --background: #ffffff;
+  --foreground: oklch(0.145 0 0);
+  --card: #ffffff;
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: #030213;
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.95 0.0058 264.53);
+  --secondary-foreground: #030213;
+  --muted: #ececf0;
+  --muted-foreground: #717182;
+  --accent: #e9ebef;
+  --accent-foreground: #030213;
+  --destructive: #d4183d;
+  --destructive-foreground: #ffffff;
+  --border: rgba(0, 0, 0, 0.1);
+  --input: transparent;
+  --input-background: #f3f3f5;
+  --switch-background: #cbced4;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: #030213;
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.145 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.396 0.141 25.723);
+  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --border: oklch(0.269 0 0);
+  --input: oklch(0.269 0 0);
+  --ring: oklch(0.439 0 0);
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.269 0 0);
+  --sidebar-ring: oklch(0.439 0 0);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/**
+ * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
+ */
+@layer base {
+  :where(:not(:has([class*=' text-']), :not(:has([class^='text-'])))) {
+    h1 {
+      font-size: var(--text-2xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h2 {
+      font-size: var(--text-xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h3 {
+      font-size: var(--text-lg);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h4 {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    label {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    button {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    input {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+  }
+}
+
+html {
+  font-size: var(--font-size);
+}
